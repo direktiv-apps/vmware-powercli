@@ -213,7 +213,7 @@ func init() {
             },
             {
               "action": null,
-              "exec": "pwsh -Command Connect-VIServer -Server \"{{ .Body.Vcenter }}\" -User \"{{ .Body.Username }}\" -Password \"{{ .Body.Password }}\"",
+              "exec": "pwsh -Command Connect-VIServer -Server {{ .Body.Vcenter }} -User {{ .Body.Username }} -Password {{ .Body.Password }}",
               "print": false,
               "silent": true
             },
@@ -397,7 +397,7 @@ func init() {
             },
             {
               "action": null,
-              "exec": "pwsh -Command Connect-VIServer -Server \"{{ .Body.Vcenter }}\" -User \"{{ .Body.Username }}\" -Password \"{{ .Body.Password }}\"",
+              "exec": "pwsh -Command Connect-VIServer -Server {{ .Body.Vcenter }} -User {{ .Body.Username }} -Password {{ .Body.Password }}",
               "print": false,
               "silent": true
             },
