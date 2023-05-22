@@ -1,0 +1,4 @@
+build/templates
+
+.direktiv.yaml
+.DS_Store

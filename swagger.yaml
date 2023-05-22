@@ -1,0 +1,258 @@
+swagger: "2.0"
+info:
+  description: VMware PowerCLI Environment
+  title: vmware-powercli
+  version: "1.0"
+  x-direktiv-meta:
+    container: gcr.io/direktiv/functions/vmware-powercli
+    maintainer: |-
+      [direktiv.io](https://www.direktiv.io)
+    issues: https://github.com/direktiv-apps/vmware-powercli/issues
+    url: https://github.com/direktiv-apps/vmware-powercli  
+    categories:
+    - build
+    - development
+    license: |-
+      [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)
+    long-description: >-
+      This function has Powershell Core and VMware PowerCLI resources. Built by Nathan Coad originally, modified by Direktiv team for production deployment.
+
+      The following versions have been included in the build:
+       - VMware-PowerCLI-13.0.0-20829139
+       - Microsoft Powershell-7.3
+
+      We pass in several environment variables to the powershell script to enable scripts to make use of Direktiv secrets for credentials. These are available as follows:
+      <table>
+      <thead>
+      <tr>
+      <th>Environment Variable</th>
+      <th>Direktiv parameter</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+      <td>VCENTER_USER</td>
+      <td>username</td>
+      </tr>
+      <tr>
+      <td>VCENTER_PASSWORD</td>
+      <td>password</td>
+      </tr>
+      <tr>
+      <td>VCENTER</td>
+      <td>vcenter</td>
+      </tr>
+      </tbody>
+      </table>
+     
+consumes:
+- application/json
+produces:
+- application/json
+schemes:
+- http
+paths:
+  /: 
+    delete:
+      parameters:
+        - name: Direktiv-ActionID
+          in: header
+          type: string
+          description: |
+            On cancel Direktiv sends a DELETE request to
+            the action with id in the header
+      x-direktiv:
+        cancel: echo 'cancel {{ .DirektivActionID }}'
+      responses:
+        200:
+    post:
+      parameters:
+        - name: Direktiv-ActionID
+          in: header
+          type: string
+          default: development
+          description: |
+            direktiv action id is an UUID. 
+            For development it can be set to 'development'
+        - name: Direktiv-TempDir
+          in: header
+          type: string
+          default: /tmp
+          description: |
+            direktiv temp dir is the working directory for that request
+            For development it can be set to e.g. '/tmp'
+        - name: body
+          in: body
+          schema:
+            type: object
+            properties:
+              username:
+                type: string
+                example: user@domain.com
+                description: Username for authenticating to vCenter
+              password:
+                type: string
+                example: SecretPassword
+                description: Password for authenticating to vCenter
+              vcenter:
+                type: string
+                example: vcsa.example.com
+                description: FQDN of the vCenter this workflow will connect to
+              files:
+                type: array
+                items:
+                  $ref: '#/definitions/direktivFile'
+                description: File to create before running commands.
+                default: []
+              commands:
+                type: array
+                description: Array of commands.
+                items:
+                  type: object
+                  properties:
+                    command:
+                      type: string
+                      description: Command to run
+                      example: Get-VM -Name jq(.vm) | ConvertTo-Json -Depth 1 -AsArray
+                    silent: 
+                      type: boolean
+                      description: If set to false the command will not print output to logs.
+                      default: false
+                    print: 
+                      type: boolean
+                      description: If set to false the command will not print the full command with arguments to logs.
+                      default: true
+                    continue: 
+                      type: boolean
+                      description: Stops excecution if command fails, otherwise proceeds with next command
+                      default: true
+                    envs:
+                      type: array
+                      description: Environment variables set for each command.
+                      example: 
+                      - name: MYVALUE
+                        value: hello
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            description: Name of the variable.
+                            type: string
+                          value:
+                            description: Value of the variable.
+                            type: string                   
+      # direktiv code generation is configured here
+      x-direktiv-function: |-
+        functions:
+        - id: vmware-powercli
+          image: gcr.io/direktiv/functions/vmware-powercli:1.0
+          type: knative-workflow
+          size: large
+      x-direktiv-examples:
+        - title: Run small script directly
+          content: |-
+            - id: vmware-powercli 
+              type: action
+              action:
+                function: vmware-powercli
+                secrets: ["vcenterUser", "vCenterPass", "vCenterName"]
+                input:
+                  username: jq(.secrets.vCenterUser)
+                  password: jq(.secrets.vCenterPass)
+                  vcenter: jq(.secrets.vCenterName)                 
+                  files:
+                  - name: script.ps1
+                    data: |
+                      Get-ChildItem . | Select Name | ConvertTo-Json 
+                  commands:
+                  - command: pwsh script.ps1
+        - title: Run file
+          content: |-
+            - id: vmware-powercli 
+              type: action
+              action:
+                function: vmware-powercli
+                secrets: ["vcenterUser", "vCenterPass", "vCenterName"]
+                input: 
+                  username: jq(.secrets.vCenterUser)
+                  password: jq(.secrets.vCenterPass)
+                  vcenter: jq(.secrets.vCenterName)
+                  commands:
+                  - command: Get-VM -Name jq(.vm) | ConvertTo-Json -Depth 1 -AsArray
+      x-direktiv:
+        cmds:
+        - action: foreach
+          loop: .Commands
+          exec: '{{ .Item.Command }}'
+          silent: '{{ .Item.Silent }}'
+          print: '{{ .Item.Print }}'
+          continue: '{{ .Item.Continue }}'
+          env:
+            - VCENTER_USER={{ .Body.Username }}
+            - VCENTER_PASSWORD={{ .Body.Password }}
+            - VCENTER={{ .Body.Vcenter }}
+          runtime-envs: |
+            [
+            {{- range $index, $element := .Item.Envs }}
+            {{- if $index}},{{- end}}
+            "{{ $element.Name }}={{ $element.Value }}"
+            {{- end }}
+            ]
+        output: |
+          {
+            "vmware-powercli": {{ index . 0 | toJson }}
+          }
+      x-direktiv-errors:
+        io.direktiv.command.error: Command execution failed
+        io.direktiv.output.error: Template error for output generation of the service
+        io.direktiv.ri.error: Can not create information object from request
+      responses:
+        200:
+          description: List of executed Powershell commands.
+          examples:
+            vmware-powercli:
+              result:
+              - Name: file1.txt
+              - Name: file2.txt
+              success: true
+          schema:
+            type: object
+            properties:
+              vmware-powercli:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - success
+                  - result
+                  properties:
+                    success:
+                      type: boolean
+                    result:
+                      additionalProperties: {}               
+        default:
+          description: generic error response
+          headers:
+            Direktiv-ErrorCode:
+              type: string
+            Direktiv-ErrorMessage:
+              type: string
+          schema:
+            $ref: "#/definitions/error"
+definitions:
+  direktivFile:
+    type: object
+    x-go-type:
+      type: DirektivFile
+      import:
+        package: github.com/direktiv/apps/go/pkg/apps 
+  error:
+    type: object
+    required:
+      - errorCode
+      - errorMessage
+    properties:
+      errorCode:
+        type: string
+      errorMessage:
+        type: string

@@ -1,0 +1,52 @@
+url: ""
+functions:
+- type: knative-workflow
+  id: powercli
+  image: registry.coadcorp.com/nathan-powercli:0.2
+  size: large
+states:
+- id: state0
+  type: action
+  action:
+    function: powercli
+    input:
+      commands:
+      - command: pwsh script.ps1
+      files:
+      - data: "Get-ChildItem . | Select Name | ConvertTo-Json \n"
+        name: script.ps1
+      password: jq(.secrets.vCenterPass)
+      ucs-address: jq(.secrets.ucsAddress)
+      ucs-password: jq(.secrets.ucsPass)
+      ucs-username: jq(.secrets.ucsUser)
+      username: jq(.secrets.vCenterUser)
+      vcenter: jq(.secrets.vCenterName)
+    secrets:
+    - vcenterUser
+    - vCenterPass
+    - vCenterName
+    - ucsUser
+    - ucsPass
+    - ucsAddress
+    files:
+    - key: script.ps1
+      scope: workflow
+  transition: state1
+- id: state1
+  type: action
+  action:
+    function: powercli
+    input:
+      commands:
+      - command: pwsh script.ps1
+      logreturn: /tmp/results.txt
+      password: jq(.secrets.vCenterPass)
+      username: jq(.secrets.vCenterUser)
+      vcenter: jq(.secrets.vCenterName)
+    secrets:
+    - vcenterUser
+    - vCenterPass
+    - vCenterName
+    files:
+    - key: script.ps1
+      scope: workflow
