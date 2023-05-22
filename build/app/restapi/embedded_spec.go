@@ -206,6 +206,18 @@ func init() {
         "x-direktiv": {
           "cmds": [
             {
+              "action": null,
+              "exec": "pwsh -Command Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:0",
+              "print": false,
+              "silent": true
+            },
+            {
+              "action": null,
+              "exec": "pwsh -Command Connect-VIServer -Server \"{{ .Body.Vcenter }}\" -User \"{{ .Body.Username }}\" -Password \"{{ .Body.Password }}\"",
+              "print": false,
+              "silent": true
+            },
+            {
               "action": "foreach",
               "continue": "{{ .Item.Continue }}",
               "env": [
@@ -220,7 +232,7 @@ func init() {
               "silent": "{{ .Item.Silent }}"
             }
           ],
-          "output": "{\n  \"vmware-powercli\": {{ index . 0 | toJson }}\n}\n"
+          "output": "{\n  \"vmware-powercli\": {{ index . 2 | toJson }}\n}\n"
         },
         "x-direktiv-errors": {
           "io.direktiv.command.error": "Command execution failed",
@@ -378,6 +390,18 @@ func init() {
         "x-direktiv": {
           "cmds": [
             {
+              "action": null,
+              "exec": "pwsh -Command Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:0",
+              "print": false,
+              "silent": true
+            },
+            {
+              "action": null,
+              "exec": "pwsh -Command Connect-VIServer -Server \"{{ .Body.Vcenter }}\" -User \"{{ .Body.Username }}\" -Password \"{{ .Body.Password }}\"",
+              "print": false,
+              "silent": true
+            },
+            {
               "action": "foreach",
               "continue": "{{ .Item.Continue }}",
               "env": [
@@ -392,7 +416,7 @@ func init() {
               "silent": "{{ .Item.Silent }}"
             }
           ],
-          "output": "{\n  \"vmware-powercli\": {{ index . 0 | toJson }}\n}\n"
+          "output": "{\n  \"vmware-powercli\": {{ index . 2 | toJson }}\n}\n"
         },
         "x-direktiv-errors": {
           "io.direktiv.command.error": "Command execution failed",
