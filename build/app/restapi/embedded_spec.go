@@ -206,6 +206,12 @@ func init() {
         "x-direktiv": {
           "cmds": [
             {
+              "action": null,
+              "exec": "pwsh -Command Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:0",
+              "print": false,
+              "silent": true
+            },
+            {
               "action": "foreach",
               "continue": "{{ .Item.Continue }}",
               "env": [
@@ -377,6 +383,12 @@ func init() {
         },
         "x-direktiv": {
           "cmds": [
+            {
+              "action": null,
+              "exec": "pwsh -Command Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:0",
+              "print": false,
+              "silent": true
+            },
             {
               "action": "foreach",
               "continue": "{{ .Item.Continue }}",
