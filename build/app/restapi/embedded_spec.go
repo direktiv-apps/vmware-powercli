@@ -206,6 +206,18 @@ func init() {
         "x-direktiv": {
           "cmds": [
             {
+              "action": null,
+              "exec": "pwsh -Command Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:0",
+              "print": false,
+              "silent": true
+            },
+            {
+              "action": null,
+              "exec": "pwsh -Command Connect-VIServer -Server \"{{ .Body.Vcenter }}\" -User \"{{ .Body.Username }}\" -Password \"{{ .Body.Password }}\"",
+              "print": false,
+              "silent": true
+            },
+            {
               "action": "foreach",
               "continue": "{{ .Item.Continue }}",
               "env": [
@@ -233,8 +245,8 @@ func init() {
             "title": "Run small script directly"
           },
           {
-            "content": "- id: vmware-powercli \n  type: action\n  action:\n    function: vmware-powercli\n    secrets: [\"vcenterUser\", \"vCenterPass\", \"vCenterName\"]\n    input: \n      username: jq(.secrets.vCenterUser)\n      password: jq(.secrets.vCenterPass)\n      vcenter: jq(.secrets.vCenterName)\n      commands:\n      - command: Get-VM -Name jq(.vm) | ConvertTo-Json -Depth 1 -AsArray",
-            "title": "Run file"
+            "content": "- id: vmware-powercli \n  type: action\n  action:\n    function: vmware-powercli\n    secrets: [\"vcenterUser\", \"vCenterPass\", \"vCenterName\"]\n    input: \n      username: jq(.secrets.vCenterUser)\n      password: jq(.secrets.vCenterPass)\n      vcenter: jq(.secrets.vCenterName)\n      commands:\n      - command: pwsh -Command \"Get-VM -Name jq(.vm) | ConvertTo-Json -Depth 1 -AsArray\"",
+            "title": "Run command directly"
           }
         ],
         "x-direktiv-function": "functions:\n- id: vmware-powercli\n  image: gcr.io/direktiv/functions/vmware-powercli:1.0\n  type: knative-workflow\n  size: large"
@@ -378,6 +390,18 @@ func init() {
         "x-direktiv": {
           "cmds": [
             {
+              "action": null,
+              "exec": "pwsh -Command Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:0",
+              "print": false,
+              "silent": true
+            },
+            {
+              "action": null,
+              "exec": "pwsh -Command Connect-VIServer -Server \"{{ .Body.Vcenter }}\" -User \"{{ .Body.Username }}\" -Password \"{{ .Body.Password }}\"",
+              "print": false,
+              "silent": true
+            },
+            {
               "action": "foreach",
               "continue": "{{ .Item.Continue }}",
               "env": [
@@ -405,8 +429,8 @@ func init() {
             "title": "Run small script directly"
           },
           {
-            "content": "- id: vmware-powercli \n  type: action\n  action:\n    function: vmware-powercli\n    secrets: [\"vcenterUser\", \"vCenterPass\", \"vCenterName\"]\n    input: \n      username: jq(.secrets.vCenterUser)\n      password: jq(.secrets.vCenterPass)\n      vcenter: jq(.secrets.vCenterName)\n      commands:\n      - command: Get-VM -Name jq(.vm) | ConvertTo-Json -Depth 1 -AsArray",
-            "title": "Run file"
+            "content": "- id: vmware-powercli \n  type: action\n  action:\n    function: vmware-powercli\n    secrets: [\"vcenterUser\", \"vCenterPass\", \"vCenterName\"]\n    input: \n      username: jq(.secrets.vCenterUser)\n      password: jq(.secrets.vCenterPass)\n      vcenter: jq(.secrets.vCenterName)\n      commands:\n      - command: pwsh -Command \"Get-VM -Name jq(.vm) | ConvertTo-Json -Depth 1 -AsArray\"",
+            "title": "Run command directly"
           }
         ],
         "x-direktiv-function": "functions:\n- id: vmware-powercli\n  image: gcr.io/direktiv/functions/vmware-powercli:1.0\n  type: knative-workflow\n  size: large"
