@@ -181,14 +181,14 @@ paths:
                   - command: pwsh -Command "Get-VM -Name jq(.vm) | ConvertTo-Json -Depth 1 -AsArray"
       x-direktiv:
         cmds:
-        - action:
-          exec: 'pwsh -Command Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:0'
-          print: false
-          silent: true
-        - action:
-          exec: 'pwsh -Command Connect-VIServer -Server {{ .Body.Vcenter }} -User {{ .Body.Username }} -Password {{ .Body.Password }}'
-          print: false
-          silent: true  
+        # - action:
+        #   exec: 'pwsh -Command Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:0'
+        #   print: false
+        #   silent: true
+        # - action:
+        #   exec: 'pwsh -Command Connect-VIServer -Server {{ .Body.Vcenter }} -User {{ .Body.Username }} -Password {{ .Body.Password }}'
+        #   print: false
+        #   silent: true  
         - action: foreach
           loop: .Commands
           exec: '{{ .Item.Command }}'
