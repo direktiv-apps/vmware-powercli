@@ -214,8 +214,8 @@ func runCommand0(ctx context.Context,
 	}
 	cmd = strings.Replace(cmd, "\n", "", -1)
 
-	silent := convertTemplateToBool("false", at, false)
-	print := convertTemplateToBool("true", at, true)
+	silent := convertTemplateToBool("true", at, false)
+	print := convertTemplateToBool("false", at, true)
 	output := ""
 
 	envs := []string{}
@@ -247,8 +247,8 @@ func runCommand1(ctx context.Context,
 	}
 	cmd = strings.Replace(cmd, "\n", "", -1)
 
-	silent := convertTemplateToBool("false", at, false)
-	print := convertTemplateToBool("true", at, true)
+	silent := convertTemplateToBool("true", at, false)
+	print := convertTemplateToBool("false", at, true)
 	output := ""
 
 	envs := []string{}

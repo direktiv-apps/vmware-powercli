@@ -208,14 +208,14 @@ func init() {
             {
               "action": "exec",
               "exec": "pwsh -Command Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:0",
-              "print": true,
-              "silent": false
+              "print": false,
+              "silent": true
             },
             {
               "action": "exec",
               "exec": "pwsh -Command Connect-VIServer -Server {{ .Vcenter }} -User {{ .Username }} -Password {{ .Password }}",
-              "print": true,
-              "silent": false
+              "print": false,
+              "silent": true
             },
             {
               "action": "foreach",
@@ -392,14 +392,14 @@ func init() {
             {
               "action": "exec",
               "exec": "pwsh -Command Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:0",
-              "print": true,
-              "silent": false
+              "print": false,
+              "silent": true
             },
             {
               "action": "exec",
               "exec": "pwsh -Command Connect-VIServer -Server {{ .Vcenter }} -User {{ .Username }} -Password {{ .Password }}",
-              "print": true,
-              "silent": false
+              "print": false,
+              "silent": true
             },
             {
               "action": "foreach",
