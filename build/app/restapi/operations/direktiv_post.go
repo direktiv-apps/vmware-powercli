@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/direktiv/apps/go/pkg/apps"
@@ -117,6 +118,37 @@ func PostDirektivHandle(params PostParams) middleware.Responder {
 
 	// if foreach returns an error there is no continue
 	//
+	// default we do not continue
+	cont = convertTemplateToBool("<no value>", accParams, false)
+	// cont = convertTemplateToBool("<no value>", accParams, true)
+	//
+
+	if err != nil && !cont {
+
+		errName := cmdErr
+
+		// if the delete function added the cancel tag
+		ci, ok := sm.Load(*params.DirektivActionID)
+		if ok {
+			cinfo, ok := ci.(*ctxInfo)
+			if ok && cinfo.cancelled {
+				errName = "direktiv.actionCancelled"
+				err = fmt.Errorf("action got cancel request")
+			}
+		}
+
+		return generateError(errName, err)
+	}
+
+	paramsCollector = append(paramsCollector, ret)
+	accParams.Commands = paramsCollector
+
+	ret, err = runCommand2(ctx, accParams, ri)
+
+	responses = append(responses, ret)
+
+	// if foreach returns an error there is no continue
+	//
 	// cont = false
 	//
 
@@ -161,11 +193,12 @@ func PostDirektivHandle(params PostParams) middleware.Responder {
 	return NewPostOK().WithPayload(resp)
 }
 
-// http request
+// exec
 func runCommand0(ctx context.Context,
 	params accParams, ri *apps.RequestInfo) (map[string]interface{}, error) {
 
-	ri.Logger().Infof("running http request")
+	ir := make(map[string]interface{})
+	ir[successKey] = false
 
 	at := accParamsTemplate{
 		*params.Body,
@@ -173,73 +206,67 @@ func runCommand0(ctx context.Context,
 		params.DirektivDir,
 	}
 
-	ir := make(map[string]interface{})
-	ir[successKey] = false
-
-	type baseRequest struct {
-		url, method, user, password string
-		insecure, err200, debug     bool
-	}
-
-	baseInfo := func(paramsIn interface{}) (*baseRequest, error) {
-
-		u, err := templateString(`<no value>`, paramsIn)
-		if err != nil {
-			return nil, err
-		}
-
-		method, err := templateString(`<no value>`, paramsIn)
-		if err != nil {
-			return nil, err
-		}
-
-		user, err := templateString(`<no value>`, paramsIn)
-		if err != nil {
-			return nil, err
-		}
-
-		password, err := templateString(`<no value>`, paramsIn)
-		if err != nil {
-			return nil, err
-		}
-
-		return &baseRequest{
-			url:      u,
-			method:   method,
-			user:     user,
-			password: password,
-			err200:   convertTemplateToBool(`<no value>`, paramsIn, true),
-			insecure: convertTemplateToBool(`<no value>`, paramsIn, false),
-			debug:    convertTemplateToBool(`<no value>`, paramsIn, false),
-		}, nil
-
-	}
-	br, err := baseInfo(at)
+	cmd, err := templateString(`pwsh -Command Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:0`, at)
 	if err != nil {
+		ri.Logger().Infof("error executing command: %v", err)
 		ir[resultKey] = err.Error()
 		return ir, err
 	}
+	cmd = strings.Replace(cmd, "\n", "", -1)
 
-	headers := make(map[string]string)
+	silent := convertTemplateToBool("true", at, false)
+	print := convertTemplateToBool("false", at, true)
+	output := ""
 
-	var data []byte
+	envs := []string{}
 
-	ri.Logger().Infof("requesting %v", br.url)
-	return doHttpRequest(br.debug, br.method, br.url, br.user, br.password,
-		headers, br.insecure, br.err200, data)
+	return runCmd(ctx, cmd, envs, output, silent, print, ri)
+
+}
+
+// end commands
+
+// exec
+func runCommand1(ctx context.Context,
+	params accParams, ri *apps.RequestInfo) (map[string]interface{}, error) {
+
+	ir := make(map[string]interface{})
+	ir[successKey] = false
+
+	at := accParamsTemplate{
+		*params.Body,
+		params.Commands,
+		params.DirektivDir,
+	}
+
+	cmd, err := templateString(`pwsh -Command Connect-VIServer -Server {{ .Body.Vcenter }} -User {{ .Body.Username }} -Password {{ .Body.Password }}`, at)
+	if err != nil {
+		ri.Logger().Infof("error executing command: %v", err)
+		ir[resultKey] = err.Error()
+		return ir, err
+	}
+	cmd = strings.Replace(cmd, "\n", "", -1)
+
+	silent := convertTemplateToBool("true", at, false)
+	print := convertTemplateToBool("false", at, true)
+	output := ""
+
+	envs := []string{}
+
+	return runCmd(ctx, cmd, envs, output, silent, print, ri)
 
 }
 
 // end commands
 
 // foreach command
-type LoopStruct1 struct {
+type LoopStruct2 struct {
 	accParams
 	Item        interface{}
 	DirektivDir string
 }
 
-func runCommand1(ctx context.Context,
+func runCommand2(ctx context.Context,
 	params accParams, ri *apps.RequestInfo) ([]map[string]interface{}, error) {
 
 	var cmds []map[string]interface{}
@@ -250,7 +277,7 @@ func runCommand1(ctx context.Context,
 
 	for a := range params.Body.Commands {
 
-		ls := &LoopStruct1{
+		ls := &LoopStruct2{
 			params,
 			params.Body.Commands[a],
 			params.DirektivDir,

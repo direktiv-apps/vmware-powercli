@@ -206,8 +206,14 @@ func init() {
         "x-direktiv": {
           "cmds": [
             {
-              "action": null,
+              "action": "exec",
               "exec": "pwsh -Command Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:0",
+              "print": false,
+              "silent": true
+            },
+            {
+              "action": "exec",
+              "exec": "pwsh -Command Connect-VIServer -Server {{ .Body.Vcenter }} -User {{ .Body.Username }} -Password {{ .Body.Password }}",
               "print": false,
               "silent": true
             },
@@ -384,8 +390,14 @@ func init() {
         "x-direktiv": {
           "cmds": [
             {
-              "action": null,
+              "action": "exec",
               "exec": "pwsh -Command Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -Confirm:0",
+              "print": false,
+              "silent": true
+            },
+            {
+              "action": "exec",
+              "exec": "pwsh -Command Connect-VIServer -Server {{ .Body.Vcenter }} -User {{ .Body.Username }} -Password {{ .Body.Password }}",
               "print": false,
               "silent": true
             },
