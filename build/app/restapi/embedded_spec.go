@@ -213,7 +213,7 @@ func init() {
             },
             {
               "action": "exec",
-              "exec": "pwsh -Command Connect-VIServer -Server {{ .Body.Vcenter }} -User {{ .Body.Username }} -Password {{ .Body.Password }}",
+              "exec": "pwsh -Command Connect-VIServer -Server {{ .Vcenter }} -User {{ .Username }} -Password {{ .Password }}",
               "print": false,
               "silent": true
             },
@@ -221,9 +221,9 @@ func init() {
               "action": "foreach",
               "continue": "{{ .Item.Continue }}",
               "env": [
-                "VCENTER_USER={{ .Body.Username }}",
-                "VCENTER_PASSWORD={{ .Body.Password }}",
-                "VCENTER={{ .Body.Vcenter }}"
+                "VCENTER_USER={{ .Username }}",
+                "VCENTER_PASSWORD={{ .Password }}",
+                "VCENTER={{ .Vcenter }}"
               ],
               "exec": "{{ .Item.Command }}",
               "loop": ".Commands",
@@ -397,7 +397,7 @@ func init() {
             },
             {
               "action": "exec",
-              "exec": "pwsh -Command Connect-VIServer -Server {{ .Body.Vcenter }} -User {{ .Body.Username }} -Password {{ .Body.Password }}",
+              "exec": "pwsh -Command Connect-VIServer -Server {{ .Vcenter }} -User {{ .Username }} -Password {{ .Password }}",
               "print": false,
               "silent": true
             },
@@ -405,9 +405,9 @@ func init() {
               "action": "foreach",
               "continue": "{{ .Item.Continue }}",
               "env": [
-                "VCENTER_USER={{ .Body.Username }}",
-                "VCENTER_PASSWORD={{ .Body.Password }}",
-                "VCENTER={{ .Body.Vcenter }}"
+                "VCENTER_USER={{ .Username }}",
+                "VCENTER_PASSWORD={{ .Password }}",
+                "VCENTER={{ .Vcenter }}"
               ],
               "exec": "{{ .Item.Command }}",
               "loop": ".Commands",

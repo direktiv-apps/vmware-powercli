@@ -239,7 +239,7 @@ func runCommand1(ctx context.Context,
 		params.DirektivDir,
 	}
 
-	cmd, err := templateString(`pwsh -Command Connect-VIServer -Server {{ .Body.Vcenter }} -User {{ .Body.Username }} -Password {{ .Body.Password }}`, at)
+	cmd, err := templateString(`pwsh -Command Connect-VIServer -Server {{ .Vcenter }} -User {{ .Username }} -Password {{ .Password }}`, at)
 	if err != nil {
 		ri.Logger().Infof("error executing command: %v", err)
 		ir[resultKey] = err.Error()
@@ -298,11 +298,11 @@ func runCommand2(ctx context.Context,
 		output := ""
 
 		envs := []string{}
-		env0, _ := templateString(`VCENTER_USER={{ .Body.Username }}`, ls)
+		env0, _ := templateString(`VCENTER_USER={{ .Username }}`, ls)
 		envs = append(envs, env0)
-		env1, _ := templateString(`VCENTER_PASSWORD={{ .Body.Password }}`, ls)
+		env1, _ := templateString(`VCENTER_PASSWORD={{ .Password }}`, ls)
 		envs = append(envs, env1)
-		env2, _ := templateString(`VCENTER={{ .Body.Vcenter }}`, ls)
+		env2, _ := templateString(`VCENTER={{ .Vcenter }}`, ls)
 		envs = append(envs, env2)
 
 		envTempl, err := templateString(`[

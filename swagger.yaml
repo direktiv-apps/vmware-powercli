@@ -186,7 +186,7 @@ paths:
           print: false
           silent: true
         - action: exec
-          exec: 'pwsh -Command Connect-VIServer -Server {{ .Body.Vcenter }} -User {{ .Body.Username }} -Password {{ .Body.Password }}'
+          exec: 'pwsh -Command Connect-VIServer -Server {{ .Vcenter }} -User {{ .Username }} -Password {{ .Password }}'
           print: false
           silent: true  
         - action: foreach
@@ -196,9 +196,9 @@ paths:
           print: '{{ .Item.Print }}'
           continue: '{{ .Item.Continue }}'
           env:
-            - VCENTER_USER={{ .Body.Username }}
-            - VCENTER_PASSWORD={{ .Body.Password }}
-            - VCENTER={{ .Body.Vcenter }}
+            - VCENTER_USER={{ .Username }}
+            - VCENTER_PASSWORD={{ .Password }}
+            - VCENTER={{ .Vcenter }}
           runtime-envs: |
             [
             {{- range $index, $element := .Item.Envs }}
