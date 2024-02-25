@@ -1,0 +1,223 @@
+openapi: 3.0.1
+info:
+  title: vmware-powercli
+  description: VMware PowerCLI Environment
+  version: "1.0"
+  x-direktiv-meta:
+    container: gcr.io/direktiv/functions/vmware-powercli
+    maintainer: "[direktiv.io](https://www.direktiv.io)"
+    issues: https://github.com/direktiv-apps/vmware-powercli/issues
+    url: https://github.com/direktiv-apps/vmware-powercli
+    categories:
+    - build
+    - development
+    license: "[Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)"
+    long-description: |-
+      This function has Powershell Core and VMware PowerCLI resources. Built by Nathan Coad originally, modified by Direktiv team for production deployment.
+      The following versions have been included in the build:
+       - VMware-PowerCLI-13.0.0-20829139
+       - Microsoft Powershell-7.3
+
+      We pass in several environment variables to the powershell script to enable scripts to make use of Direktiv secrets for credentials. These are available as follows: <table> <thead> <tr> <th>Environment Variable</th> <th>Direktiv parameter</th> </tr> </thead> <tbody> <tr> <td>VCENTER_USER</td> <td>username</td> </tr> <tr> <td>VCENTER_PASSWORD</td> <td>password</td> </tr> <tr> <td>VCENTER</td> <td>vcenter</td> </tr> </tbody> </table>
+servers:
+- url: /
+paths:
+  /:
+    post:
+      parameters:
+      - name: Direktiv-ActionID
+        in: header
+        description: "direktiv action id is an UUID. \nFor development it can be set\
+          \ to 'development'\n"
+        schema:
+          type: string
+          default: development
+      - name: Direktiv-TempDir
+        in: header
+        description: |
+          direktiv temp dir is the working directory for that request
+          For development it can be set to e.g. '/tmp'
+        schema:
+          type: string
+          default: /tmp
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Username for authenticating to vCenter
+                  example: user@domain.com
+                password:
+                  type: string
+                  description: Password for authenticating to vCenter
+                  example: SecretPassword
+                vcenter:
+                  type: string
+                  description: FQDN of the vCenter this workflow will connect to
+                  example: vcsa.example.com
+                files:
+                  type: array
+                  description: File to create before running commands.
+                  items:
+                    $ref: '#/components/schemas/direktivFile'
+                commands:
+                  type: array
+                  description: Array of commands.
+                  items:
+                    type: object
+                    properties:
+                      command:
+                        type: string
+                        description: Command to run
+                        example: Get-VM -Name jq(.vm) | ConvertTo-Json -Depth 1 -AsArray
+                      silent:
+                        type: boolean
+                        description: If set to false the command will not print output
+                          to logs.
+                        default: false
+                      print:
+                        type: boolean
+                        description: If set to false the command will not print the
+                          full command with arguments to logs.
+                        default: true
+                      continue:
+                        type: boolean
+                        description: "Stops excecution if command fails, otherwise\
+                          \ proceeds with next command"
+                        default: true
+                      envs:
+                        type: array
+                        description: Environment variables set for each command.
+                        example:
+                        - name: MYVALUE
+                          value: hello
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              description: Name of the variable.
+                            value:
+                              type: string
+                              description: Value of the variable.
+        required: false
+      responses:
+        "200":
+          description: List of executed Powershell commands.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  vmware-powercli:
+                    type: array
+                    items:
+                      required:
+                      - result
+                      - success
+                      type: object
+                      properties:
+                        success:
+                          type: boolean
+                        result:
+                          type: object
+            vmware-powercli:
+              example:
+                result:
+                - Name: file1.txt
+                - Name: file2.txt
+                success: true
+        default:
+          description: generic error response
+          headers:
+            Direktiv-ErrorMessage:
+              schema:
+                type: string
+            Direktiv-ErrorCode:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+      x-direktiv-function: |-
+        functions:
+        - id: vmware-powercli
+          image: gcr.io/direktiv/functions/vmware-powercli:1.0
+          type: knative-workflow
+          size: large
+      x-direktiv-examples:
+      - title: Run small script directly
+        content: "- id: vmware-powercli \n  type: action\n  action:\n    function:\
+          \ vmware-powercli\n    secrets: [\"vcenterUser\", \"vCenterPass\", \"vCenterName\"\
+          ]\n    input:\n      username: jq(.secrets.vCenterUser)\n      password:\
+          \ jq(.secrets.vCenterPass)\n      vcenter: jq(.secrets.vCenterName)    \
+          \             \n      files:\n      - name: script.ps1\n        data: |\n\
+          \          Get-ChildItem . | Select Name | ConvertTo-Json \n      commands:\n\
+          \      - command: pwsh script.ps1"
+      - title: Run command directly
+        content: "- id: vmware-powercli \n  type: action\n  action:\n    function:\
+          \ vmware-powercli\n    secrets: [\"vcenterUser\", \"vCenterPass\", \"vCenterName\"\
+          ]\n    input: \n      username: jq(.secrets.vCenterUser)\n      password:\
+          \ jq(.secrets.vCenterPass)\n      vcenter: jq(.secrets.vCenterName)\n  \
+          \    commands:\n      - command: pwsh -Command \"Get-VM -Name jq(.vm) |\
+          \ ConvertTo-Json -Depth 1 -AsArray\""
+      x-direktiv:
+        cmds:
+        - action: exec
+          exec: pwsh -Command Set-PowerCLIConfiguration -InvalidCertificateAction
+            Ignore -Confirm:0
+          print: false
+          silent: true
+        - action: exec
+          exec: "pwsh -Command Connect-VIServer -Server {{ .Vcenter }} -User {{ .Username\
+            \ }} -Password {{ .Password }}"
+          print: false
+          silent: true
+        - action: foreach
+          loop: .Commands
+          exec: "{{ .Item.Command }}"
+          silent: "{{ .Item.Silent }}"
+          print: "{{ .Item.Print }}"
+          continue: "{{ .Item.Continue }}"
+          env:
+          - "VCENTER_USER={{ .Username }}"
+          - "VCENTER_PASSWORD={{ .Password }}"
+          - "VCENTER={{ .Vcenter }}"
+          runtime-envs: |
+            [
+            {{- range $index, $element := .Item.Envs }}
+            {{- if $index}},{{- end}}
+            "{{ $element.Name }}={{ $element.Value }}"
+            {{- end }}
+            ]
+        output: |
+          {
+            "vmware-powercli": {{ index . 2 | toJson }}
+          }
+      x-direktiv-errors:
+        io.direktiv.command.error: Command execution failed
+        io.direktiv.output.error: Template error for output generation of the service
+        io.direktiv.ri.error: Can not create information object from request
+      x-codegen-request-body-name: body
+components:
+  schemas:
+    direktivFile:
+      type: object
+      x-go-type:
+        type: DirektivFile
+        import:
+          package: github.com/direktiv/apps/go/pkg/apps
+    error:
+      required:
+      - errorCode
+      - errorMessage
+      type: object
+      properties:
+        errorCode:
+          type: string
+        errorMessage:
+          type: string
